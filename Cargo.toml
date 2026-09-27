@@ -1,0 +1,43 @@
+[package]
+name = "scunet"
+version = "0.1.0"
+edition = "2021"
+description = "Fast, self-contained SCUNet image restoration (Swin-Conv-UNet) with CPU and CUDA backends"
+license = "MIT"
+repository = "https://github.com/jacobsparts/scunet-rs"
+readme = "README.md"
+
+[[bin]]
+name = "scunet"
+path = "src/main.rs"
+
+[features]
+# The default build supports both backends: `--device cpu` is pure Rust,
+# `--device gpu` uses the embedded CUDA fatbins. Building the CUDA feature needs
+# nvcc (set NVCC=/path/to/nvcc if it is not on PATH).
+default = ["cuda"]
+# Compiles cuda/scunet.cu with nvcc and embeds the fatbins.
+cuda = []
+# DEVELOPMENT BUILDS ONLY. Unlocks the kernel-variant switches (SCUNET_GEMM, SCUNET_1X1,
+# SCUNET_ATTN, SCUNET_LN, SCUNET_C2X2) and the instruments (SCUNET_PROFILE,
+# SCUNET_MEMTRACE), which is how each kernel was justified against the one it replaced.
+# A release binary refuses them by name instead of ignoring them, so an A/B cannot
+# silently become two identical runs.
+#     cargo build --release --features dev,cuda
+dev = []
+
+[dependencies]
+png = "0.17"
+# The CPU backend's parallelism: see the "Parallelism" note at the top of src/cpu.rs.
+rayon = "1.12"
+# Driver layer, module/launch/buffer plumbing, the safetensors reader and the generic kernel set.
+lightgpu = { git = "https://github.com/jacobsparts/lightgpu.git" }
+
+[build-dependencies]
+# Compiles this engine's kernel family and the toolkit subset it calls.
+lightgpu-build = { git = "https://github.com/jacobsparts/lightgpu.git", package = "lightgpu-build" }
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 4
