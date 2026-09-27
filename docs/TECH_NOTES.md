@@ -589,8 +589,11 @@ the fatbin.
   64x64 the body sits at 8x8 and passing the padded size forces all four body
   blocks unshifted, which is a 4.4 disagreement that looks like an engine bug and
   is not one. Upstream's own test scripts leave the 256 default, and so does
-  `tools/compare.py`. `tools/network_scunet.py` is the vendored upstream with one
-  documented edit (its `timm` import, replaced by `tools/timm_shim.py`).
+  `tools/compare.py`. `tools/network_scunet.py` is the vendored upstream with two
+  documented edits, both import-only: its `timm` import points at
+  `tools/timm_shim.py`, and its unused `from thop import profile` is dropped (it is
+  never called, and requiring it made the module unimportable under the torch
+  install that lacks thop).
 * `examples/bench.rs` - end-to-end timing and footprint. `examples/k1x1.rs`,
   `kattn.rs` and `klinear.rs` time one kernel at one geometry with resident
   buffers; `examples/geom.rs` prints the per-stage shapes; `examples/probe.rs`

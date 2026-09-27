@@ -36,8 +36,7 @@ layout, an inverted shift pattern or the conv/trans halves swapped in the
 concatenation shows up as >=1e-2. This script prints both ends of that range, and
 exits non-zero if anything exceeds `--tol`.
 
-Requires torch (and `thop`, which the vendored module imports at top level) in the
-interpreter that runs it, plus both checkpoints - the converted `.safetensors` for
+Requires torch and einops in the interpreter that runs it, plus both checkpoints - the converted `.safetensors` for
 the architecture metadata and the upstream `.pth` for torch to load. Neither is in
 the repository. `tools/reference.py` needs only numpy, which is why the day-to-day
 parity loop does not go through here.
@@ -56,9 +55,9 @@ sys.path.insert(0, str(HERE))
 import reference  # noqa: E402  (the numpy transcription, in this directory)
 
 # `network_scunet` is imported inside `build_torch` rather than here ON PURPOSE: it
-# does `from thop import profile` at top level, so a module-level import makes even
-# `--help` fail in an interpreter without torch's neighbourhood, with a traceback
-# instead of the sentence that says what to install.
+# needs einops, so a module-level import makes even `--help` fail in an interpreter
+# without torch's neighbourhood, with a traceback instead of the sentence that says
+# what to install.
 
 # The stages the dump names, in the order the walker reaches them.
 PLANES = [
@@ -106,8 +105,7 @@ def build_torch(pth, in_nc, dim, config, input_resolution):
         from network_scunet import SCUNet
     except ImportError as e:
         raise SystemExit(
-            f"this script needs torch and thop (the vendored network_scunet.py imports "
-            f"thop at top level): {e}\n"
+            f"this script needs torch and einops: {e}\n"
             f"interpreter: {sys.executable}\n"
             f"tools/reference.py, which the Rust tests use, needs only numpy."
         )

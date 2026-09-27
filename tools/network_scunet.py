@@ -1,16 +1,22 @@
 # Vendored from the upstream SCUNet repository (https://github.com/cszn/SCUNet,
-# Apache-2.0), with exactly ONE edit: the `timm.models.layers` import is pointed
-# at `timm_shim`, the same three helpers swin2sr-rs vendors, because timm is a
-# large dependency for a DropPath that is a no-op at eval. Nothing else is
-# changed, so this file remains an independent transcription the engine can be
-# held to - which is the whole point of vendoring it rather than trusting a
-# second copy to drift.
+# Apache-2.0), with exactly TWO edits, both about IMPORTS ONLY - not one line of
+# the network changes, so this file remains an independent transcription the engine
+# can be held to, which is the whole point of vendoring it rather than trusting a
+# second copy to drift:
+#
+#   1. the `timm.models.layers` import is pointed at `timm_shim`, the same three
+#      helpers swin2sr-rs vendors, because timm is a large dependency for a
+#      DropPath that is a no-op at eval;
+#   2. `from thop import profile` is dropped. `profile` is never called anywhere in
+#      this file, but the import is at top level, so merely importing the module
+#      required thop - and two of the torch installs on this machine disagree about
+#      whether thop is present. `tools/compare.py` is the only consumer and it
+#      needs the network, not a FLOP counter.
 # -*- coding: utf-8 -*-
 import math
 import torch
 import torch.nn as nn
 import numpy as np
-from thop import profile
 from einops import rearrange 
 from einops.layers.torch import Rearrange, Reduce
 from timm_shim import trunc_normal_, DropPath
