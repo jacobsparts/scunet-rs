@@ -566,9 +566,30 @@ the fatbin.
 
 * `tools/reference.py` - the CPU reference the fixture checker and `tests/`
   compare against.
+* `tools/compare.py` - the authority on torch agreement. It runs the vendored
+  upstream module itself, hooks the nine named stages (plus the trailing
+  stride-2 convolution as `m_down*_blocks`, the leading `ConvTranspose2d` as
+  `m_up*_up` and the input to `m_tail` as `m_tail_in`) and diffs them against
+  `examples/dump.rs`'s planes, plane by plane:
+
+  ```
+  cargo run --release --example dump -- color_real_psnr_64.bin /tmp/rustdump
+  /home/jacob/torchenv311/bin/python tools/compare.py --dump /tmp/rustdump
+  ```
+
+  On the 64x64 fixture every plane agrees to **4.0e-05** and the whole forward to
+  **1.3e-06**; on the 80x64 one to **1.6e-06**. That figure is the one
+  `tests/parity.rs` and `src/cpu.rs` quote, and until this script existed nothing
+  in the tree could reproduce it.
 * `tools/bench_torch.py` - times upstream on CPU or CUDA from the same input,
   rebuilding the model per size because `input_resolution` is baked into the
-  window attention. `tools/network_scunet.py` is the vendored upstream with one
+  window attention. **`input_resolution` is a TRAP**: both `ConvTransBlock` and
+  `Block` do `if self.input_resolution <= self.window_size: self.type = 'W'`, so
+  a stage whose resolution collapses to one window silently loses its shift - at
+  64x64 the body sits at 8x8 and passing the padded size forces all four body
+  blocks unshifted, which is a 4.4 disagreement that looks like an engine bug and
+  is not one. Upstream's own test scripts leave the 256 default, and so does
+  `tools/compare.py`. `tools/network_scunet.py` is the vendored upstream with one
   documented edit (its `timm` import, replaced by `tools/timm_shim.py`).
 * `examples/bench.rs` - end-to-end timing and footprint. `examples/k1x1.rs`,
   `kattn.rs` and `klinear.rs` time one kernel at one geometry with resident

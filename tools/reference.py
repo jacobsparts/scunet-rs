@@ -13,8 +13,9 @@ numpy alone, so the day-to-day parity loop does not need a torch install:
     python3 tools/reference.py --check                     # self-test vs the .pth
     python3 tools/reference.py --fixture ../tests/data/tiny
 
-`tools/compare.py` remains the authority on torch agreement (it runs the upstream
-module itself); this file is what the Rust tests can regenerate anywhere.
+`tools/compare.py` is the authority on torch agreement (it runs the upstream
+module itself and diffs it against this file, stage by stage); this file is what
+the Rust tests can regenerate anywhere, in any interpreter, without torch.
 
 The arithmetic below is written to mirror `network_scunet.py` statement by
 statement, because the whole point is to disagree with the Rust when the Rust is

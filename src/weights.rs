@@ -100,8 +100,19 @@ pub struct Weights {
 impl Weights {
     pub fn load(path: impl AsRef<Path>) -> Result<Weights, String> {
         let path = path.as_ref();
-        let file = safetensors::File::open(path)
-            .map_err(|e| format!("{}: {}", path.display(), e))?;
+        let file = safetensors::File::open(path).map_err(|e| {
+            // `lightgpu`'s reader names the file in EVERY one of its own messages
+            // (it maps the OS error itself), so prefixing unconditionally prints the
+            // path twice - which is what a mistyped `-m` used to look like:
+            //     scunet: /x/nope.safetensors: /x/nope.safetensors: No such file ...
+            let shown = path.display().to_string();
+            let msg = e.to_string();
+            if msg.starts_with(&shown) {
+                msg
+            } else {
+                format!("{shown}: {msg}")
+            }
+        })?;
         let mut meta: BTreeMap<String, String> = BTreeMap::new();
         for k in ["arch", "variant", "in_nc", "dim", "config", "head_dim", "window_size"] {
             let v = file.metadata_get(k).ok_or_else(|| {

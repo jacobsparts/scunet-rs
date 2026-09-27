@@ -44,9 +44,12 @@ PSNR](docs/before-after.png)
   holding about a third of the device memory PyTorch does. PyTorch cannot run a
   2048x2048 denoise on this 8 GB card at all.
 * **Verified per op, not just per image.** Every CUDA kernel is compared against
-  its CPU twin, and the whole forward against a PyTorch transcription of the
-  upstream network at 1.2e-06 - the comparison is against upstream, so a
-  mistake made identically in both backends cannot hide.
+  its CPU twin, the whole forward against a PyTorch transcription of the upstream
+  network at 1.2e-06, and `tools/compare.py` closes the loop by running the
+  upstream module itself under torch and diffing it stage by stage against what
+  the engine produced - 16 named planes, worst 4.0e-05 on the 64x64 fixture. The
+  comparison is against upstream, so a mistake made identically in both backends
+  cannot hide.
 
 ## Download
 
@@ -128,6 +131,12 @@ architecture is read out of the weights rather than guessed from the file name:
 ```sh
 python3 tools/convert.py scunet_color_real_psnr.pth scunet-color-real-psnr.safetensors
 ```
+
+`tools/compare.py` is the other half of that: it runs the upstream module under
+torch on a fixture, diffs it against `tools/reference.py`, and - with
+`--dump <dir>` - against every named stage `examples/dump.rs` wrote, so a
+divergence is localised rather than merely detected. It needs torch; the Rust
+tests do not, which is why the numpy transcription above exists.
 
 `tools/convert.py --help` lists the three flags it takes: `--variant` and
 `--in-nc`, needed only for a file whose name is not one of the eight (the

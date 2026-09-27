@@ -1,9 +1,14 @@
 //! The Rust backends against the validated reference, on the golden fixtures.
 //!
-//! The fixtures were produced by `tools/reference.py`, which agrees with an
-//! independent functional transcription of `network_scunet.py` to 3.1e-6 on the full
-//! model. The tolerance here is 2e-3: an exact transcription lands at ~1e-6, a single
-//! wrong tap, a transposed layout, an inverted shift pattern, a missing skip or the
+//! The fixtures were produced by `tools/reference.py`, which agrees with the upstream
+//! module itself to 1.31e-06 on the 64x64 fixture and 1.55e-06 on the 80x64 one -
+//! measured by `tools/compare.py`, which is the authority on torch agreement because
+//! it runs `network_scunet.py` under torch rather than trusting this file's own
+//! summary of it. That script also diffs the engine against upstream stage by stage,
+//! which is the check below a diffuse end-to-end difference cannot replace.
+//!
+//! The tolerance here is 2e-3: an exact transcription lands at ~1e-6, a single wrong
+//! tap, a transposed layout, an inverted shift pattern, a missing skip or the
 //! conv/trans halves swapped in the concatenation is >=1e-2. Three orders of
 //! magnitude of headroom in each direction is what makes this test worth having;
 //! tightening it to 1e-4 would start failing on accumulation-order differences
