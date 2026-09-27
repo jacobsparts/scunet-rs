@@ -88,6 +88,19 @@ if asked for the GPU rather than failing obscurely. The kernels cover `sm_61`,
 `sm_75`, `sm_80` and compute capability 8.0 PTX, so the GPU path runs on Pascal
 (GTX 10-series) through Ampere, and on anything newer via the PTX.
 
+`cargo test` follows the same split, and the plain form needs `nvcc` too. On a
+machine without it, test what the CPU-only configuration can:
+
+```sh
+cargo test --release --no-default-features
+```
+
+That runs the library tests and the CPU parity tests. The device targets - the
+`cuda_ops` test and seven of the examples - are declared with Cargo
+`required-features`, so they are left out of that build entirely instead of
+failing on an import that cannot resolve. Every example with no device in it
+still builds.
+
 `lightgpu` is a normal Cargo dependency on
 [its repository](https://github.com/jacobsparts/lightgpu), so a clone of this
 project builds on its own.
