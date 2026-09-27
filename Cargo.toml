@@ -2,7 +2,7 @@
 name = "scunet"
 version = "0.1.0"
 edition = "2021"
-description = "Fast, self-contained SCUNet image restoration (Swin-Conv-UNet) with CPU and CUDA backends"
+description = "Fast, self-contained SCUNet real-world image denoising (Swin-Conv-UNet) in Rust with CPU and CUDA backends"
 license = "MIT"
 repository = "https://github.com/jacobsparts/scunet-rs"
 readme = "README.md"
