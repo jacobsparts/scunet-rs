@@ -37,8 +37,10 @@ concatenation shows up as >=1e-2. This script prints both ends of that range, an
 exits non-zero if anything exceeds `--tol`.
 
 Requires torch (and `thop`, which the vendored module imports at top level) in the
-interpreter that runs it; `tools/reference.py` needs only numpy, which is why the
-day-to-day parity loop does not go through here.
+interpreter that runs it, plus both checkpoints - the converted `.safetensors` for
+the architecture metadata and the upstream `.pth` for torch to load. Neither is in
+the repository. `tools/reference.py` needs only numpy, which is why the day-to-day
+parity loop does not go through here.
 """
 import argparse
 import contextlib
@@ -171,6 +173,19 @@ def main():
     ap.add_argument("--tol", type=float, default=2e-3,
                     help="fail above this (default 2e-3, the Rust tests' tolerance)")
     args = ap.parse_args()
+
+    # Both checkpoints are needed and neither is in the repository: the converted
+    # `.safetensors` carries the architecture metadata and the `.pth` is what torch
+    # loads. A fresh clone has neither, so name the missing one instead of letting
+    # the reader raise a bare FileNotFoundError.
+    for label, path in (("converted checkpoint", args.weights), ("upstream checkpoint", args.pth)):
+        if not Path(path).exists():
+            raise SystemExit(
+                f"missing {label}: {path}\n"
+                f"the converted file comes from tools/convert.py (and the released "
+                f"assets), the upstream .pth from the SCUNet downloader; see the "
+                f"README's 'Choosing a checkpoint' section."
+            )
 
     w, meta = reference.read_safetensors(args.weights)
     in_nc = int(meta["in_nc"])
