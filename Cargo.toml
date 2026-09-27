@@ -11,6 +11,62 @@ readme = "README.md"
 name = "scunet"
 path = "src/main.rs"
 
+# THE CUDA-ONLY TARGETS. tests/cuda_ops.rs and the example instruments below exist
+# to compare or measure kernels ON THE DEVICE, and under `--no-default-features`
+# there is nothing for them to name: `scunet::cuda` does not exist. Without this list
+# the CPU-only configuration does not build AT ALL - `cargo test --release
+# --no-default-features`, which is the only form of `cargo test` available on a
+# machine with no nvcc, failed with 34 errors before a single test ran.
+#
+# `required-features` is Cargo's own way of saying "do not build this target unless
+# the feature is on". A crate-level `#![cfg(feature = "cuda")]` is the other way, and
+# it is NOT enough here: it works in a test target (the file then compiles to zero
+# tests) but an example is a BINARY, so gating it out entirely leaves rustc looking
+# for `main` and reporting E0601. Sibling engines gate their device tests the inline
+# way because they have no device examples to gate; this repository has seven.
+#
+# `cargo build --release --no-default-features` still builds every example that has no
+# device in it - bench, budget_cpu, cpu_mem, dump, geom, probe and stages_cpu.
+[[test]]
+name = "cuda_ops"
+path = "tests/cuda_ops.rs"
+required-features = ["cuda"]
+
+[[example]]
+name = "blockdet"
+path = "examples/blockdet.rs"
+required-features = ["cuda"]
+
+[[example]]
+name = "blockmarg"
+path = "examples/blockmarg.rs"
+required-features = ["cuda"]
+
+[[example]]
+name = "k1x1"
+path = "examples/k1x1.rs"
+required-features = ["cuda"]
+
+[[example]]
+name = "kattn"
+path = "examples/kattn.rs"
+required-features = ["cuda"]
+
+[[example]]
+name = "klinear"
+path = "examples/klinear.rs"
+required-features = ["cuda"]
+
+[[example]]
+name = "kpromote"
+path = "examples/kpromote.rs"
+required-features = ["cuda"]
+
+[[example]]
+name = "budget"
+path = "examples/budget.rs"
+required-features = ["cuda"]
+
 [features]
 # The default build supports both backends: `--device cpu` is pure Rust,
 # `--device gpu` uses the embedded CUDA fatbins. Building the CUDA feature needs
