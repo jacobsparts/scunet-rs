@@ -288,12 +288,34 @@ pub fn check_cuda(plane: usize) -> Result<usize, String> {
 mod tests {
     use super::*;
 
+    /// `../models/scunet-color-real-psnr.safetensors`, or None when the checkpoint
+    /// has not been converted on this machine.
+    ///
+    /// The three tests below are about the numbers a PUBLISHED CHECKPOINT rounds to -
+    /// its `dim` and `in_nc` decide what a pixel costs - so there is nothing to stand
+    /// in for it, and they SKIP (not fail) when it is absent, exactly as
+    /// `tests/parity.rs` does. Without that, a clone of this repository passes the
+    /// build and then panics in `cargo test` on a file only the author's machine has.
+    fn checkpoint() -> Option<std::path::PathBuf> {
+        let p = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../models/scunet-color-real-psnr.safetensors");
+        if p.exists() {
+            Some(p)
+        } else {
+            None
+        }
+    }
+
     /// The floor of the model is the ONE size everyone knows: at 1024x1024 the
     /// engine measured 1560.0 MiB of peak live, and the model must not be far below
     /// that - a guard that under-counts is a guard that lets the abort through.
     #[test]
     fn the_model_is_at_least_the_measurement() {
-        let wt = Weights::load("../models/scunet-color-real-psnr.safetensors").unwrap();
+        let Some(ckpt) = checkpoint() else {
+            eprintln!("skipping: ../models/scunet-color-real-psnr.safetensors not converted");
+            return;
+        };
+        let wt = Weights::load(&ckpt).unwrap();
         let p = CpuPlan::of(&wt, 1024, 1024);
         // The DERIVATION, restated as an assertion rather than as a quoted number:
         // `(6*dim + in_nc)` floats a pixel, which is 387 floats at this checkpoint.
@@ -336,7 +358,11 @@ mod tests {
     /// refuses without a remedy is a dead end.
     #[test]
     fn the_refusal_fires_and_names_the_numbers() {
-        let wt = Weights::load("../models/scunet-color-real-psnr.safetensors").unwrap();
+        let Some(ckpt) = checkpoint() else {
+            eprintln!("skipping: ../models/scunet-color-real-psnr.safetensors not converted");
+            return;
+        };
+        let wt = Weights::load(&ckpt).unwrap();
         let plan = CpuPlan::of(&wt, 1024, 1024);
         // The shape of the message is what a caller reads, so assert on the parts
         // that are decisions rather than on its formatting.
@@ -358,7 +384,11 @@ mod tests {
     /// with a normal machine needs to hold.
     #[test]
     fn a_pass_that_fits_is_not_refused() {
-        let wt = Weights::load("../models/scunet-color-real-psnr.safetensors").unwrap();
+        let Some(ckpt) = checkpoint() else {
+            eprintln!("skipping: ../models/scunet-color-real-psnr.safetensors not converted");
+            return;
+        };
+        let wt = Weights::load(&ckpt).unwrap();
         for s in [64usize, 256, 384, 512, 768, 1024] {
             let p = CpuPlan::of(&wt, s, s);
             assert!(p.peak < 4 << 30, "{s}: {} claimed, which no machine here needs", fmt_bytes(p.peak));
