@@ -59,8 +59,13 @@ on the CPU; they differ only in whether CUDA support is compiled in.
 | 8 `scunet-*.safetensors` checkpoints | every published SCUNet model | 72 MB each; the name to pass to `-m` is in the table below |
 
 ```sh
+chmod +x scunet-linux-x86_64
 ./scunet-linux-x86_64 -m scunet-color-real-psnr.safetensors -i noisy.png -o clean.png
 ```
+
+The `chmod` is not decoration: a download does not carry the executable
+bit through, and a binary that has lost it fails with `Permission denied`
+before it can print anything.
 
 ## Build
 
